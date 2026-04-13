@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tic Tac Toe - First to 5</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f4f4f4;
+    margin-top: 40px;
+  }
+
+  h1 {
+    margin-bottom: 10px;
+  }
+
+  #scoreboard {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  #board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+    justify-content: center;
+    margin: 20px auto;
+  }
+
+  .cell {
+    width: 100px;
+    height: 100px;
+    background: white;
+    font-size: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid #333;
+  }
+
+  .cell:hover {
+    background: #eaeaea;
+  }
+
+  #message {
+    font-size: 18px;
+    margin-top: 10px;
+  }
+
+  button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 16px;
+  }
+</style>
+</head>
+
+<body>
+
+<h1>Tic Tac Toe</h1>
+<div id="scoreboard">
+  You: <span id="playerScore">0</span> |
+  AI: <span id="aiScore">0</span> |
+  First to 5 wins 🏆
+</div>
+
+<div id="board"></div>
+
+<div id="message"></div>
+<button onclick="resetGame()">Reset Game</button>
+
+<script>
+let board = ["", "", "", "", "", "", "", "", ""];
+let gameOver = false;
+
+let playerScore = 0;
+let aiScore = 0;
+
+const boardEl = document.getElementById("board");
+const messageEl = document.getElementById("message");
+
+function renderBoard() {
+  boardEl.innerHTML = "";
+  board.forEach((cell, i) => {
+    const div = document.createElement("div");
+    div.classList.add("cell");
+    div.textContent = cell;
+    div.onclick = () => playerMove(i);
+    boardEl.appendChild(div);
+  });
+}
+
+function playerMove(i) {
+  if (board[i] !== "" || gameOver) return;
+
+  board[i] = "X";
+  renderBoard();
+
+  if (checkWinner("X")) return endRound("player");
+  if (boardFull()) return endRound("draw");
+
+  setTimeout(aiMove, 300);
+}
+
+function aiMove() {
+  if (gameOver) return;
+
+  // simple AI: win > block > random
+  let move = findBestMove();
+
+  board[move] = "O";
+  renderBoard();
+
+  if (checkWinner("O")) return endRound("ai");
+  if (boardFull()) return endRound("draw");
+}
+
+function findBestMove() {
+  // 1. win if possible
+  for (let i = 0; i < 9; i++) {
+    if (board[i] === "") {
+      board[i] = "O";
+      if (checkWinner("O")) { board[i] = ""; return i; }
+      board[i] = "";
+    }
+  }
+
+  // 2. block player
+  for (let i = 0; i < 9; i++) {
+    if (board[i] === "") {
+      board[i] = "X";
+      if (checkWinner("X")) { board[i] = ""; return i; }
+      board[i] = "";
+    }
+  }
+
+  // 3. center
+  if (board[4] === "") return 4;
+
+  // 4. random
+  let empty = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+  return empty[Math.floor(Math.random() * empty.length)];
+}
+
+function checkWinner(p) {
+  const wins = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  return wins.some(line => line.every(i => board[i] === p));
+}
+
+function boardFull() {
+  return board.every(cell => cell !== "");
+}
+
+function endRound(winner) {
+  gameOver = true;
+
+  if (winner === "player") {
+    playerScore++;
+    messageEl.textContent = "You win this round!";
+  } else if (winner === "ai") {
+    aiScore++;
+    messageEl.textContent = "AI wins this round!";
+  } else {
+    messageEl.textContent = "It's a draw!";
+  }
+
+  updateScore();
+
+  if (playerScore === 5 || aiScore === 5) {
+    messageEl.textContent =
+      playerScore === 5 ? "🎉 You win the game!" : "🤖 AI wins the game!";
+    return;
+  }
+
+  setTimeout(nextRound, 1200);
+}
+
+function nextRound() {
+  board = ["", "", "", "", "", "", "", "", ""];
+  gameOver = false;
+  renderBoard();
+}
+
+function updateScore() {
+  document.getElementById("playerScore").textContent = playerScore;
+  document.getElementById("aiScore").textContent = aiScore;
+}
+
+function resetGame() {
+  board = ["", "", "", "", "", "", "", "", ""];
+  playerScore = 0;
+  aiScore = 0;
+  gameOver = false;
+  messageEl.textContent = "";
+  updateScore();
+  renderBoard();
+}
+
+renderBoard();
+</script>
+
+</body>
+</html>
